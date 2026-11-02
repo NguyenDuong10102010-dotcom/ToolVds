@@ -1,0 +1,27 @@
+name: Build Painuzz
+on:
+  push: { branches: [ main, master ] }
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install ldid xz make dpkg
+      - name: Setup Theos
+        run: |
+          export THEOS=$HOME/theos
+          git clone --recursive --depth=1 https://github.com/theos/theos.git $THEOS
+          mkdir -p $THEOS/sdks
+          curl -L https://github.com/theos/sdks/archive/refs/heads/master.tar.gz | tar xz -C /tmp
+          mv /tmp/sdks-master/*.sdk $THEOS/sdks/
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          echo "$THEOS/bin" >> $GITHUB_PATH
+      - run: |
+          make clean || true
+          make package FINALPACKAGE=1 DEBUG=0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Painuzz-deb
+          path: packages/*.deb
