@@ -5,23 +5,53 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: brew install ldid xz make dpkg
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git make curl xz-utils unzip \
+            clang lld llvm \
+            libssl-dev libxml2-dev \
+            libplist-dev libpng-dev \
+            zlib1g-dev libtinfo5 \
+            build-essential \
+            fakeroot dpkg-dev
+
+      - name: Install ldid
+        run: |
+          git clone --depth=1 https://github.com/ProcursusTeam/ldid.git /tmp/ldid
+          cd /tmp/ldid
+          git submodule update --init
+          make CXX=clang++
+          sudo cp ./ldid /usr/local/bin/ldid
+          sudo chmod +x /usr/local/bin/ldid
+
       - name: Setup Theos
         run: |
           export THEOS=$HOME/theos
           git clone --recursive --depth=1 https://github.com/theos/theos.git $THEOS
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+          echo "$THEOS/bin" >> $GITHUB_PATH
+
+      - name: Download iOS SDKs
+        run: |
           mkdir -p $THEOS/sdks
           curl -L https://github.com/theos/sdks/archive/refs/heads/master.tar.gz | tar xz -C /tmp
           mv /tmp/sdks-master/*.sdk $THEOS/sdks/
-          echo "THEOS=$THEOS" >> $GITHUB_ENV
-          echo "$THEOS/bin" >> $GITHUB_PATH
-      - run: |
+          ls $THEOS/sdks
+
+      - name: Build package
+        run: |
           make clean || true
           make package FINALPACKAGE=1 DEBUG=0
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
           name: Painuzz-deb
           path: packages/*.deb
+          retention-days: 30
