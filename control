@@ -1,0 +1,9 @@
+Package: com.painuzz.videostar
+Name: Painuzz Tool
+Depends: mobilesubstrate, firmware (>= 14.0)
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Tool ho tro edit Video Star
+Maintainer: Painuzz
+Author: Painuzz
+Section: Tweaks
