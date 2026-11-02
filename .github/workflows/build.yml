@@ -9,15 +9,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (Ubuntu 24.04 fix)
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          # Cài đặt libtinfo5 từ kho lưu trữ cũ (bắt buộc cho Theos)
-          wget https://mirrors.edge.kernel.org/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
-          echo "f04c382f877c9eab631818eadbfaa0c5 libtinfo5_6.3-2ubuntu0.1_amd64.deb" | md5sum -c --status
-          sudo dpkg -i libtinfo5_6.3-2ubuntu0.1_amd64.deb
           
-          # Cài đặt các gói phụ thuộc còn lại (đã sửa lỗi libxml2)
+          # Tải libtinfo5 từ kho lưu trữ chính thức của Ubuntu (thay vì mirror bị lỗi 404)
+          wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          
+          # Dùng apt install thay vì dpkg -i để tự động xử lý các gói phụ thuộc
+          sudo apt install -y ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+          
           sudo apt-get install -y \
             git make curl xz-utils unzip \
             clang lld llvm \
